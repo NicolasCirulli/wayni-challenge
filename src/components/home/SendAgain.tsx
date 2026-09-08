@@ -1,19 +1,11 @@
 import { UserCard } from "@/components/ui/UserCard";
+import type { User } from "@/types/user";
 
-const recentContacts = [
-  { name: "Carolina", imageSrc: "/images/users/carolina.png" },
-  { name: "Marco", imageSrc: "/images/users/marco.png" },
-  { name: "Josefina", imageSrc: "/images/users/josefina.png" },
-  { name: "Alonso", imageSrc: "/images/users/alonso.png" },
-  { name: "Barbara2", imageSrc: "/images/users/barbara.png" },
-  { name: "Carolina2", imageSrc: "/images/users/carolina.png" },
-  { name: "Marco2", imageSrc: "/images/users/marco.png" },
-  { name: "Josefina2", imageSrc: "/images/users/josefina.png" },
-  { name: "Alonso2", imageSrc: "/images/users/alonso.png" },
-  { name: "Barbara3", imageSrc: "/images/users/barbara.png" },
-] as const;
+type SendAgainProps = {
+  contacts: User[];
+};
 
-export function SendAgain() {
+export function SendAgain({ contacts }: SendAgainProps) {
   return (
     <section aria-labelledby="send-again-title" className="lg:flex lg:flex-col lg:gap-4 lg:items-center">
       <h2
@@ -25,11 +17,11 @@ export function SendAgain() {
 
       <div className="mt-6 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-max gap-3">
-          {recentContacts.map((contact) => (
+          {contacts.map((contact) => (
             <UserCard
-              key={contact.name}
-              imageSrc={contact.imageSrc}
-              name={contact.name}
+              key={contact.id}
+              imageSrc={contact.avatar}
+              name={contact.fullname}
             />
           ))}
         </div>
