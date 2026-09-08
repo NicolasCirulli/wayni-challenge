@@ -5,17 +5,17 @@ import { usePathname } from "next/navigation";
 
 const navigationItems = [
     {
-        label: "Home",
+        label: "Inicio",
         href: "/",
         icon: "/icons/navigation/home.svg",
     },
     {
-        label: "Transfers",
+        label: "Transferencias",
         href: "/transfers",
         icon: "/icons/navigation/transfers.svg",
     },
     {
-        label: "Profile",
+        label: "Perfil",
         href: "/profile",
         icon: "/icons/navigation/profile.svg",
     },

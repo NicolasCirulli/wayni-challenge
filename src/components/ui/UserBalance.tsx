@@ -5,7 +5,7 @@ type UserBalanceProps = {
 
 export function UserBalance({
   amount,
-  label = "Your Balance",
+  label = "Tu saldo",
 }: UserBalanceProps) {
   return (
     <div className="flex flex-col items-center gap-2 text-primary-foreground">

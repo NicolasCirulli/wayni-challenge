@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Wayni Wallet",
-  description: "Wayni Wallet",
+  description: "Billetera virtual Wayni",
 };
 
 export default function RootLayout({

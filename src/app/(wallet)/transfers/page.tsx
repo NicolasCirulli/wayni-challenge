@@ -1,7 +1,7 @@
 export default function TransferPage() {
     return (
         <main className="">
-            <h1>TransferPage</h1>
+            <h1>Transferencias</h1>
         </main>
     );
 }

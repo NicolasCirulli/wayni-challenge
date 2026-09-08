@@ -3,7 +3,7 @@ import { formatCurrency } from "@/utils/format-currency";
 import Image from "next/image";
 
 function formatMovementDate(date: Date): string {
-  const formattedDate = new Intl.DateTimeFormat("en-US", {
+  const formattedDate = new Intl.DateTimeFormat("es-AR", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -23,7 +23,7 @@ export function LatestTransactions({ movements }: { movements: WalletMovement[] 
         id="latest-transactions-title"
         className="mx-auto max-w-[390px] text-center text-xl leading-6 font-bold text-foreground"
       >
-        Latest Transaction
+        Últimas transacciones
       </h2>
       {movements?.length > 0
         ? <ul className="mx-auto mt-6 flex w-full max-w-[390px] lg:mx-0 lg:max-w-none lg:px-[15%] flex-col gap-6">
@@ -64,7 +64,15 @@ export function LatestTransactions({ movements }: { movements: WalletMovement[] 
             </li>
           ))}
         </ul>
-        : <p className="py-8 text-center text-muted-foreground"> No hay movimientos </p>
+        : <div className="py-8 text-center">
+          <p className="text-sm font-medium text-foreground">
+            Aún no hay actividad
+          </p>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Tus transacciones aparecerán aquí
+          </p>
+        </div>
       }
     </section>
   );
