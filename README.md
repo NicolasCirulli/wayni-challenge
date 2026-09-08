@@ -1,36 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Aprendizaje: `useSyncExternalStore`
 
-## Getting Started
+Durante este challenge no sabía utilizar `useSyncExternalStore`. Como el estado de la wallet vive en `localStorage`, y no dentro del estado interno de React, tuve que aprender cómo conectar un store externo con los componentes de React.
 
-First, run the development server:
+El hook [`useWallet`](src/hooks/useWallet.ts) utiliza esa API para:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Obtener un snapshot estable de la wallet.
+- Suscribirse a cambios del evento `storage` entre pestañas.
+- Suscribirse a un evento personalizado para actualizar la UI cuando la wallet cambia en la misma pestaña.
+- Definir un snapshot para el servidor y evitar problemas durante la hidratación de Next.js.
+- Inicializar la wallet en el cliente cuando todavía no existe.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Recursos consultados
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Documentación oficial de React: `useSyncExternalStore`](https://es.react.dev/reference/react/useSyncExternalStore#extracting-the-logic-to-a-custom-hook)
+- [Video sobre `useSyncExternalStore`](https://www.youtube.com/watch?v=NBjycPpPHQQ)
+- Consultas puntuales a una IA para entender el contrato de `subscribe`, `getSnapshot` y `getServerSnapshot`, además de su interacción con `localStorage` y la hidratación.

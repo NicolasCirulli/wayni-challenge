@@ -7,9 +7,12 @@ import { RoundedContainer } from "@/components/ui/RoundedContainer";
 import { UserBalance } from "@/components/ui/UserBalance";
 import { UserCard } from "@/components/ui/UserCard";
 import { useUsers } from "@/hooks/useUsers";
+import { useWallet } from "@/hooks/useWallet";
+import { formatCurrency } from "@/utils/format-currency";
 
 export default function Home() {
   const { user, contacts } = useUsers();
+  const { wallet, isLoading } = useWallet();
 
   return (
     <>
@@ -23,12 +26,12 @@ export default function Home() {
             />
           )}
           <div className="mt-8">
-            <UserBalance amount="$ 2.800" />
+            {isLoading ? <p>cargando</p> : wallet && <UserBalance amount={formatCurrency(wallet.balanceCents)} />}
           </div>
         </header>
         <RoundedContainer className="flex-1 px-3 pt-6 pb-28">
           <SendAgain contacts={contacts} />
-          <LatestTransactions />
+          <LatestTransactions movements={wallet?.movements ?? []} />
         </RoundedContainer>
       </main>
       <BottomNavigation />
