@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="./src/app/icon.svg" width="88" alt="Logo de WayniWallet" />
   <h1>WayniWallet</h1>
   <p>Wallet web desarrollada como challenge técnico frontend para Wayni.</p>
 </div>
