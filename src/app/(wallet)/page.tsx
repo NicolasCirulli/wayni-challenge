@@ -1,18 +1,14 @@
 "use client";
 
 import { LatestTransactions } from "@/components/home/LatestTransactions";
-import { LatestTransactionsSkeleton } from "@/components/home/LatestTransactionsSkeleton";
 import { SendAgain } from "@/components/home/SendAgain";
-import { SendAgainError } from "@/components/home/SendAgainError";
-import { SendAgainSkeleton } from "@/components/home/SendAgainSkeleton";
-import { UserHeaderError } from "@/components/home/UserHeaderError";
-import { UserHeaderSkeleton } from "@/components/home/UserHeaderSkeleton";
-import { RoundedContainer } from "@/components/ui/RoundedContainer";
+import { UserHeader } from "@/components/home/UserHeader";
 import { UserBalance } from "@/components/ui/UserBalance";
-import { UserBalanceSkeleton } from "@/components/ui/UserBalanceSkeleton";
-import { UserCard } from "@/components/ui/UserCard";
+import { WalletScreenLayout } from "@/components/ui/WalletScreenLayout";
 import { useUsers } from "@/hooks/useUsers";
 import { useWallet } from "@/hooks/useWallet";
+import type { User } from "@/types/user";
+import type { Wallet } from "@/types/wallet";
 import { formatCurrency } from "@/utils/format-currency";
 
 export default function Home() {
@@ -21,43 +17,84 @@ export default function Home() {
   const isLoading = isLoadingUser || isLoadingWallet;
 
   return (
-    <>
-      <main className="flex flex-col mx-auto min-h-dvh w-full lg:w-full lg:max-w-full lg:pl-64 bg-primary">
-        <header className="p-8">
-          {isLoading ? (
-            <UserHeaderSkeleton />
-          ) : isError ?
-            <UserHeaderError />
-            :
-            user ? (
-              <UserCard
-                imageSrc={user.avatar}
-                name={user.fullname}
-                variant="header"
-              />
-            ) : null}
-          <div className="mt-8">
-            {isLoading ? (
-              <UserBalanceSkeleton />
-            ) : wallet ? (
-              <UserBalance amount={formatCurrency(wallet.balanceCents)} />
-            ) : null}
-          </div>
-        </header>
-        <RoundedContainer className="flex-1 px-3 pt-6 pb-28">
-          {isLoading ? (
-            <SendAgainSkeleton />
-          ) : isError ? <SendAgainError refetch={refetch} /> : (
-            <SendAgain contacts={contacts} />
-          )}
-          {isLoading ? (
-            <LatestTransactionsSkeleton />
-          ) : (
-            <LatestTransactions movements={wallet?.movements ?? []} />
-          )}
-        </RoundedContainer>
-      </main>
+    <WalletScreenLayout
+      headerContent={
+        <HomeHeader
+          isLoading={isLoading}
+          isError={isError}
+          user={user}
+          wallet={wallet}
+        />
+      }
+    >
+      <HomeSendAgain
+        isLoading={isLoading}
+        isError={isError}
+        contacts={contacts}
+        refetch={refetch}
+      />
+      <HomeTransactions
+        isLoading={isLoading}
+        wallet={wallet}
+      />
+    </WalletScreenLayout>
+  );
+}
 
+function HomeHeader({
+  isLoading,
+  isError,
+  user,
+  wallet,
+}: {
+  isLoading: boolean;
+  isError: boolean;
+  user?: User;
+  wallet: Wallet | null;
+}) {
+  return (
+    <>
+      {isLoading ? (
+        <UserHeader.Skeleton />
+      ) : isError ? (
+        <UserHeader.Error />
+      ) : (
+        <UserHeader user={user} />
+      )}
+      <div className="mt-8">
+        {isLoading ? (
+          <UserBalance.Skeleton />
+        ) : wallet ? (
+          <UserBalance amount={formatCurrency(wallet.balanceCents)} />
+        ) : null}
+      </div>
     </>
   );
+}
+
+function HomeSendAgain({
+  isLoading,
+  isError,
+  contacts,
+  refetch,
+}: {
+  isLoading: boolean;
+  isError: boolean;
+  contacts: User[];
+  refetch: () => void;
+}) {
+  if (isLoading) return <SendAgain.Skeleton />;
+  if (isError) return <SendAgain.Error refetch={refetch} />;
+  return <SendAgain contacts={contacts} />;
+}
+
+function HomeTransactions({
+  isLoading,
+  wallet,
+}: {
+  isLoading: boolean;
+  wallet: Wallet | null;
+}) {
+  if (isLoading) return <LatestTransactions.Skeleton />;
+  return <LatestTransactions movements={wallet?.movements ?? []} />;
 }

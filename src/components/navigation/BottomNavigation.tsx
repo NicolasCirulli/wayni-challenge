@@ -39,7 +39,7 @@ export function BottomNavigation() {
                             key={item.href}
                             href={item.href}
                             aria-current={isActive ? "page" : undefined}
-                            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-2 text-sm leading-[17px] transition-all lg:flex-none lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-4 lg:py-3 lg:text-base lg:leading-5 ${isActive
+                            className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-2 text-sm leading-5 transition-all lg:flex-none lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-4 lg:py-3 lg:text-base ${isActive
                                     ? "text-accent font-semibold lg:bg-muted"
                                     : "text-muted-foreground hover:text-foreground lg:hover:bg-muted/50"
                                 }`}
