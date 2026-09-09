@@ -4,7 +4,7 @@
 const { mapUser } = require("../../src/mappers/user-mapper");
 
 describe("mapUser", () => {
-  it("converts a Random User API response into the app user model", () => {
+  it("convierte una respuesta de Random User API al modelo de usuario de la aplicación", () => {
     const apiUser = {
       gender: "female",
       name: {
