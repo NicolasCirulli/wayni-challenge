@@ -1,4 +1,8 @@
-export interface WalletMovementReceiver {
+export type WalletMovementDirection = "incoming" | "outgoing";
+
+export type WalletMovementType = "transfer" | "cash-in";
+
+export interface WalletMovementParticipant {
   id: string;
   name: string;
   image: string;
@@ -6,7 +10,9 @@ export interface WalletMovementReceiver {
 
 export interface WalletMovement {
   id: string;
-  receiver: WalletMovementReceiver;
+  type: WalletMovementType;
+  direction: WalletMovementDirection;
+  participant?: WalletMovementParticipant;
   concept: string;
   amountCents: number;
   date: Date;

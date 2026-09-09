@@ -22,7 +22,7 @@ export function LatestTransactions({ movements }: { movements: WalletMovement[] 
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-muted">
                   <Image
-                    src="/icons/transactions/transfer.svg"
+                    src={`/icons/transactions/${transaction.type}.svg`}
                     alt=""
                     width={24}
                     height={24}
@@ -41,12 +41,12 @@ export function LatestTransactions({ movements }: { movements: WalletMovement[] 
               </div>
 
               <span
-                className={`shrink-0 text-base leading-[19px] font-bold ${transaction.amountCents > 0
+                className={`shrink-0 text-base leading-[19px] font-bold ${transaction.direction === "incoming"
                   ? "text-success"
                   : "text-destructive"
                   }`}
               >
-                {formatCurrency(transaction.amountCents)}
+                {transaction.direction === "incoming" ? "+" : "-"}{formatCurrency(transaction.amountCents)}
               </span>
             </li>
           ))}

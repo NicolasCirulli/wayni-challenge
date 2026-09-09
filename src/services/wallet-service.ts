@@ -1,13 +1,48 @@
 import type {
   Wallet,
   WalletMovement,
-  WalletMovementReceiver,
+  WalletMovementParticipant,
 } from "@/types/wallet";
 
 export const WALLET_STORAGE_KEY = "wallet";
 export const INITIAL_WALLET: Wallet = {
-  balanceCents: 280_000,
-  movements: [],
+  balanceCents: 105_000_000,
+  movements: [
+    {
+      id: "movement-transfer-outgoing",
+      type: "transfer",
+      direction: "outgoing",
+      participant: {
+        id: "user-josefina",
+        name: "Josefina Ruiz",
+        image: "/images/users/josefina.png",
+      },
+      concept: "Transferencia",
+      amountCents: 60_000_000,
+      date: new Date("2026-09-08T12:00:00.000Z"),
+    },
+    {
+      id: "movement-cash-in",
+      type: "cash-in",
+      direction: "incoming",
+      concept: "Ingreso de dinero",
+      amountCents: 120_000_000,
+      date: new Date("2026-09-07T15:30:00.000Z"),
+    },
+    {
+      id: "movement-transfer-incoming",
+      type: "transfer",
+      direction: "incoming",
+      participant: {
+        id: "user-marco",
+        name: "Marco Rossi",
+        image: "/images/users/marco.png",
+      },
+      concept: "Transferencia recibida",
+      amountCents: 45_000_000,
+      date: new Date("2026-09-06T10:15:00.000Z"),
+    },
+  ],
 };
 export const WALLET_UPDATED_EVENT = "wallet_storage_updated";
 type StoredWalletMovement = Omit<WalletMovement, "date"> & {
@@ -93,9 +128,9 @@ export function initializeWallet(): Wallet {
 }
 
 //helpers
-function isWalletMovementReceiver(
+function isWalletMovementParticipant(
   value: unknown,
-): value is WalletMovementReceiver {
+): value is WalletMovementParticipant {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -116,13 +151,19 @@ function hasWalletMovementData(
     value !== null &&
     "id" in value &&
     typeof value.id === "string" &&
-    "receiver" in value &&
-    isWalletMovementReceiver(value.receiver) &&
+    "type" in value &&
+    (value.type === "transfer" || value.type === "cash-in") &&
+    "direction" in value &&
+    (value.direction === "incoming" || value.direction === "outgoing") &&
+    (!("participant" in value) ||
+      value.participant === undefined ||
+      isWalletMovementParticipant(value.participant)) &&
     "concept" in value &&
     typeof value.concept === "string" &&
     "amountCents" in value &&
     typeof value.amountCents === "number" &&
-    Number.isInteger(value.amountCents)
+    Number.isInteger(value.amountCents) &&
+    value.amountCents > 0
   );
 }
 

@@ -10,6 +10,8 @@ import Image from "next/image";
 
 export default function TransferPage() {
     const { wallet, isLoading } = useWallet();
+    const transfers = wallet?.movements.filter((movement) => movement.type === "transfer") ?? [];
+
     return (
         <main className="flex flex-col mx-auto min-h-dvh w-full lg:w-full lg:max-w-full lg:pl-64 bg-primary">
             <HeaderNavigation title="Transferencias" />
@@ -18,7 +20,7 @@ export default function TransferPage() {
                     <h2 className="text-foreground text-xl font-bold">Últimas transferencias</h2>
                     <Image src="/icons/calendar.svg" alt="" width={28} height={28} />
                 </div>
-                {isLoading ? <LatestTransfersSkeleton /> : <LatestTransfers movements={wallet?.movements ?? []} />}
+                {isLoading ? <LatestTransfersSkeleton /> : <LatestTransfers movements={transfers} />}
             </RoundedContainer>
         </main>
     );

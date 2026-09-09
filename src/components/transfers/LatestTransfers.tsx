@@ -1,4 +1,4 @@
-import { WalletMovement } from "@/types/wallet";
+import type { WalletMovement } from "@/types/wallet";
 import { formatCurrency } from "@/utils/format-currency";
 import { formatDate } from "@/utils/format-date";
 import Image from "next/image";
@@ -23,16 +23,18 @@ export function LatestTransfers({ movements }: LatestTransfersProps) {
                 <div className="flex gap-2 items-center min-w-0">
                     <Image
                         className="rounded-full shrink-0"
-                        src={m.receiver.image}
+                        src={m.participant?.image ?? "/icons/transactions/transfer.svg"}
                         width={60} height={60}
-                        alt={`Avatar usuario ${m.receiver.name}`}
+                        alt={m.participant ? `Avatar usuario ${m.participant.name}` : ""}
                     />
                     <div className="min-w-0">
-                        <p className="text-foreground text-lg truncate">{m.receiver.name}</p>
+                        <p className="text-foreground text-lg truncate">{m.participant?.name ?? m.concept}</p>
                         <p className="text-muted-foreground text-sm">{formatDate(m.date)}</p>
                     </div>
                 </div>
-                <p className="font-bold text-xl text-end text-destructive">{formatCurrency(m.amountCents)}</p>
+                <p className={`font-bold text-xl text-end ${m.direction === "incoming" ? "text-success" : "text-destructive"}`}>
+                    {m.direction === "incoming" ? "+" : "-"}{formatCurrency(m.amountCents)}
+                </p>
             </li>)
         }
     </ul>

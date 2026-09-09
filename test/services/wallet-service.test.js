@@ -3,30 +3,28 @@
 
 const {
   getWallet,
+  INITIAL_WALLET,
   initializeWallet,
   saveWallet,
 } = require("../../src/services/wallet-service");
 
-describe("wallet service", () => {
+describe("servicio de billetera", () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it("returns null when there is no wallet saved", () => {
+  it("devuelve null cuando no hay una billetera guardada", () => {
     expect(getWallet()).toBeNull();
   });
 
-  it("creates and saves the initial wallet when none exists", () => {
+  it("crea y guarda la billetera inicial cuando no existe una", () => {
     const initialWallet = initializeWallet();
 
-    expect(initialWallet).toEqual({
-      balanceCents: 280_000,
-      movements: [],
-    });
+    expect(initialWallet).toEqual(INITIAL_WALLET);
     expect(getWallet()).toEqual(initialWallet);
   });
 
-  it("returns the stored wallet instead of creating a new one", () => {
+  it("devuelve la billetera guardada en lugar de crear una nueva", () => {
     const storedWallet = {
       balanceCents: 2_800_000,
       movements: [],
@@ -36,13 +34,15 @@ describe("wallet service", () => {
     expect(initializeWallet()).toEqual(storedWallet);
   });
 
-  it("saves and retrieves the wallet from localStorage", () => {
+  it("guarda y recupera la billetera desde localStorage", () => {
     const wallet = {
       balanceCents: 2_800_000,
       movements: [
         {
           id: "movement-1",
-          receiver: {
+          type: "transfer",
+          direction: "outgoing",
+          participant: {
             id: "user-1",
             name: "Rose Fleury",
             image: "https://randomuser.me/api/portraits/women/80.jpg",
@@ -59,28 +59,27 @@ describe("wallet service", () => {
     expect(getWallet()).toEqual(wallet);
   });
 
-  it("preserves multiple movements and negative amounts", () => {
+  it("conserva distintos tipos y direcciones de movimientos", () => {
     const wallet = {
       balanceCents: 2_800_000,
       movements: [
         {
           id: "movement-expense",
-          receiver: {
+          type: "transfer",
+          direction: "outgoing",
+          participant: {
             id: "user-1",
             name: "Rose Fleury",
             image: "https://randomuser.me/api/portraits/women/80.jpg",
           },
           concept: "Internet",
-          amountCents: -2_400,
+          amountCents: 2_400,
           date: new Date("2026-09-08T10:00:00.000Z"),
         },
         {
           id: "movement-income",
-          receiver: {
-            id: "user-2",
-            name: "Marco Rossi",
-            image: "https://randomuser.me/api/portraits/men/10.jpg",
-          },
+          type: "cash-in",
+          direction: "incoming",
           concept: "Cash in",
           amountCents: 26_000,
           date: new Date("2026-09-08T11:00:00.000Z"),
@@ -93,7 +92,7 @@ describe("wallet service", () => {
     expect(getWallet()).toEqual(wallet);
   });
 
-  it("accepts a wallet without movements yet", () => {
+  it("acepta una billetera que todavía no tiene movimientos", () => {
     const wallet = {
       balanceCents: 2_800_000,
       movements: [],
@@ -104,7 +103,7 @@ describe("wallet service", () => {
     expect(getWallet()).toEqual(wallet);
   });
 
-  it("does not overwrite the stored wallet with an invalid wallet", () => {
+  it("no sobrescribe la billetera guardada con una billetera inválida", () => {
     const currentWallet = {
       balanceCents: 2_800_000,
       movements: [],
@@ -121,7 +120,7 @@ describe("wallet service", () => {
     expect(getWallet()).toEqual(currentWallet);
   });
 
-  it("returns the latest wallet when it is saved more than once", () => {
+  it("devuelve la última billetera cuando se guarda más de una vez", () => {
     saveWallet({ balanceCents: 2_800_000, movements: [] });
 
     const latestWallet = {
@@ -129,13 +128,15 @@ describe("wallet service", () => {
       movements: [
         {
           id: "movement-latest",
-          receiver: {
+          type: "transfer",
+          direction: "outgoing",
+          participant: {
             id: "user-1",
             name: "Rose Fleury",
             image: "https://randomuser.me/api/portraits/women/80.jpg",
           },
           concept: "Transfer",
-          amountCents: -60_000,
+          amountCents: 60_000,
           date: new Date("2026-09-08T12:00:00.000Z"),
         },
       ],
@@ -146,7 +147,7 @@ describe("wallet service", () => {
     expect(getWallet()).toEqual(latestWallet);
   });
 
-  it("returns null when a movement is invalid", () => {
+  it("devuelve null cuando un movimiento es inválido", () => {
     localStorage.setItem(
       "wallet",
       JSON.stringify({
@@ -158,22 +159,34 @@ describe("wallet service", () => {
     expect(getWallet()).toBeNull();
   });
 
-  it("returns null when the stored value is not a valid wallet", () => {
+  it("rechaza movimientos con montos no positivos", () => {
+    expect(() =>
+      saveWallet({
+        balanceCents: 2_800_000,
+        movements: [
+          {
+            id: "movement-invalid-amount",
+            type: "cash-in",
+            direction: "incoming",
+            concept: "Cash in",
+            amountCents: 0,
+            date: new Date("2026-09-08T12:00:00.000Z"),
+          },
+        ],
+      }),
+    ).toThrow("Invalid wallet");
+  });
+
+  it("devuelve null cuando el valor guardado no es una billetera válida", () => {
     localStorage.setItem("wallet", "invalid-json");
 
     expect(getWallet()).toBeNull();
   });
 
-  it("replaces an invalid stored wallet with the initial wallet", () => {
+  it("reemplaza una billetera guardada inválida por la billetera inicial", () => {
     localStorage.setItem("wallet", "invalid-json");
 
-    expect(initializeWallet()).toEqual({
-      balanceCents: 280_000,
-      movements: [],
-    });
-    expect(getWallet()).toEqual({
-      balanceCents: 280_000,
-      movements: [],
-    });
+    expect(initializeWallet()).toEqual(INITIAL_WALLET);
+    expect(getWallet()).toEqual(INITIAL_WALLET);
   });
 });
