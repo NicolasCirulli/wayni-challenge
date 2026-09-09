@@ -31,6 +31,7 @@ describe("LatestTransfers", () => {
         movements={[
           {
             id: "movement-1",
+            referenceNumber: "12345678",
             type: "transfer",
             direction: "outgoing",
             participant: {
