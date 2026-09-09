@@ -1,20 +1,7 @@
 import type { WalletMovement } from "@/types/wallet";
 import { formatCurrency } from "@/utils/format-currency";
+import { formatDate } from "@/utils/format-date";
 import Image from "next/image";
-
-function formatMovementDate(date: Date): string {
-  const formattedDate = new Intl.DateTimeFormat("es-AR", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-  const formattedTime = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-
-  return `${formattedDate} · ${formattedTime}`;
-}
 
 export function LatestTransactions({ movements }: { movements: WalletMovement[] }) {
   return (
@@ -48,7 +35,7 @@ export function LatestTransactions({ movements }: { movements: WalletMovement[] 
                     {transaction.concept}
                   </h3>
                   <p className="truncate text-sm leading-[17px] text-muted-foreground">
-                    {formatMovementDate(transaction.date)}
+                    {formatDate(transaction.date)}
                   </p>
                 </div>
               </div>
