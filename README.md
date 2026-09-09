@@ -3,6 +3,32 @@
   <p>Wallet web desarrollada como challenge técnico frontend para Wayni.</p>
 </div>
 
+## Índice
+
+- [Descripción](#descripción)
+- [Demo](#demo)
+- [Funcionalidades](#funcionalidades)
+  - [Inicio](#inicio)
+  - [Flujo de transferencia](#flujo-de-transferencia)
+  - [Historial](#historial)
+  - [Perfil](#perfil)
+- [Tecnologías](#tecnologías)
+- [Arquitectura de estado](#arquitectura-de-estado)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Rutas](#rutas)
+- [Requisitos](#requisitos)
+- [Instalación y ejecución](#instalación-y-ejecución)
+- [Scripts disponibles](#scripts-disponibles)
+- [Pruebas](#pruebas)
+- [Decisiones técnicas](#decisiones-técnicas)
+  - [Dinero representado en centavos](#dinero-representado-en-centavos)
+  - [Persistencia local](#persistencia-local)
+- [Uso de IA](#uso-de-ia)
+  - [Herramientas utilizadas](#herramientas-utilizadas)
+  - [Chats de referencia](#chats-de-referencia)
+  - [Aprendizajes](#aprendizajes)
+- [Alcance](#alcance)
+
 ## Descripción
 
 WayniWallet permite consultar el saldo de una billetera, ver sus últimos movimientos, elegir un contacto y completar un flujo de transferencia. La aplicación consume usuarios desde Random User API, mantiene el borrador de la transferencia en memoria y persiste el saldo y los movimientos en `localStorage`.
@@ -188,6 +214,14 @@ El challenge no utiliza un backend de movimientos. La billetera se inicializa co
 Durante el desarrollo del challenge utilicé herramientas de inteligencia artificial como apoyo para implementar, investigar y revisar el proyecto.
 
 Las decisiones de arquitectura, estructura del proyecto, flujo funcional, modelo de datos y alcance fueron tomadas por mí. La IA se utilizó principalmente para generar, revisar y ajustar helpers y utilidades a demanda, a partir de necesidades concretas del desarrollo.
+
+En un principio dejé bastante libertad a la IA para que haga la maquetación rápido porque quería priorizar la funcionalidad, tenía en mente refactorizar la UI cuando llegara al final, se puede ver en el chat de referencia 1 al inicio cómo uso codex + mcp de figma para hacer las primeras vistas, extraer las variables y assets, de esa manera, mientras le pedía que implemente la vista con datos mock iba pensando cómo iba a encarar las cosas.
+
+La mayoría de los test los creó la IA, yo hice los que eran requeridos por el challenge y los otros se los pedí que los cree, en cuando a helpers y formatters, también lo delegué bastante, se los pedí diciéndole cómo quería que funcionar y que métodos/api usar, algunos los fui haciendo con el autocomplete de antigravity.
+
+Donde sí necesité bastante ayuda fue con useSyncExternalStore, nunca había utilizado el hook, fue con lo que más me trabé porque si bien se lo podía pedir a la IA que lo implemente, si no me sentaba un rato a verlo no iba a entender cómo funcionaba después.
+
+Cuando terminé la parte funcional, hice un refactor grande de la UI, implementé manualmente la UI del home con algunos autocomplete de antigravity, al tener el caso de ejemplo completo, fui a codex y con un /goal lo hice replicar los mismos patrones a todos los componentes de la app
 
 ### Herramientas utilizadas
 
