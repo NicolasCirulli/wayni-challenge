@@ -21,6 +21,13 @@
 - [Scripts disponibles](#scripts-disponibles)
 - [Pruebas](#pruebas)
 - [Decisiones técnicas](#decisiones-técnicas)
+  - [Separación entre services, mappers y hooks](#separación-entre-services-mappers-y-hooks)
+  - [Separación del estado según su responsabilidad](#separación-del-estado-según-su-responsabilidad)
+  - [Uso de TanStack Query detrás de un hook](#uso-de-tanstack-query-detrás-de-un-hook)
+  - [Refactor de la UI y layouts compartidos](#refactor-de-la-ui-y-layouts-compartidos)
+  - [Componentes compuestos](#componentes-compuestos)
+  - [Flujo de transferencia basado en rutas](#flujo-de-transferencia-basado-en-rutas)
+  - [Validaciones en cada etapa](#validaciones-en-cada-etapa)
   - [Dinero representado en centavos](#dinero-representado-en-centavos)
   - [Persistencia local](#persistencia-local)
 - [Uso de IA](#uso-de-ia)
@@ -65,7 +72,7 @@ Durante el flujo se aplican las siguientes reglas:
 - Los importes se convierten a centavos enteros antes de realizar cálculos.
 - No se puede transferir un monto superior al saldo disponible.
 - No se permite transferir al usuario principal.
-- El concepto es obligatorio y admite hasta 25 caracteres.
+- El concepto admite hasta 25 caracteres.
 - La confirmación queda bloqueada mientras la operación está en curso.
 - Un bloqueo sincrónico evita que un doble click genere dos movimientos.
 - Una transferencia exitosa descuenta el saldo, guarda el movimiento y actualiza la interfaz sin recargar la página.
@@ -199,29 +206,247 @@ pnpm build
 
 ## Decisiones técnicas
 
-Todas las decisiones de arquitectura de esta aplicación fueron tomadas por mí. La excepción fue el aprendizaje necesario para utilizar `useSyncExternalStore`, cuya investigación y comprensión apoyé con documentación, videos y consultas a una IA.
+La consigna del challenge definía algunas herramientas y restricciones, entre ellas el uso de una capa de servicios, TanStack Query para los datos remotos y Zustand para el borrador de la transferencia.
+
+A partir de esas condiciones, las principales decisiones estuvieron relacionadas con cómo separar responsabilidades, aislar dependencias externas, estructurar el estado, organizar el flujo de transferencia y mantener una UI simple de modificar.
+
+### Separación entre services, mappers y hooks
+
+La capa de `services` estaba prevista en la consigna. Sobre esa estructura agregué una capa de `mappers` para evitar que el resto de la aplicación dependa directamente de la forma de las respuestas externas.
+
+Por ejemplo, los datos obtenidos desde Random User API se transforman primero al modelo utilizado internamente por WayniWallet. De esta manera, si cambia la estructura del payload de la API, el impacto queda concentrado principalmente en el mapper en lugar de propagarse por componentes y lógica de presentación.
+
+Sobre esa capa utilicé hooks como `useUsers` y `useWallet` para que los componentes tampoco necesiten conocer los detalles de la implementación utilizada para obtener o sincronizar los datos.
+
+En el caso de los usuarios, los componentes consumen `useUsers` en lugar de utilizar TanStack Query directamente. Esto agrega una abstracción pequeña, pero permite cambiar en el futuro la estrategia de obtención de datos sin modificar las vistas que los utilizan.
+
+La separación general queda conceptualmente de esta manera:
+
+```text
+API / localStorage
+        ↓
+     services
+        ↓
+      mapper
+        ↓
+       hooks
+        ↓
+    componentes
+```
+
+No todas las capas intervienen necesariamente en todos los casos. El objetivo es que cada una tenga una responsabilidad clara y que los componentes de presentación conozcan la menor cantidad posible de detalles sobre el origen de los datos.
+
+### Separación del estado según su responsabilidad
+
+Preferí no utilizar una única solución para todo el estado de la aplicación.
+
+Los usuarios provienen de una fuente remota, por lo que TanStack Query se encarga de su consulta y caché.
+
+El borrador de transferencia representa estado temporal del flujo y se mantiene con Zustand, tal como indicaba la consigna.
+
+La billetera, en cambio, debía persistir entre recargas sin un backend real. Por ese motivo su estado se mantiene en `localStorage` y se conecta con React mediante `useSyncExternalStore`.
+
+Inicialmente consideré utilizar Zustand también para la billetera, ya que habría simplificado la implementación, pero preferí respetar la separación propuesta por el challenge y utilizar Zustand únicamente para el draft.
+
+De esta manera cada herramienta resuelve un problema diferente:
+
+* **TanStack Query:** server state.
+* **Zustand:** estado temporal del flujo.
+* **`localStorage` + `useSyncExternalStore`:** estado persistente de la billetera.
+
+### Uso de TanStack Query detrás de un hook
+
+TanStack Query era un requerimiento del challenge y lo utilicé para resolver la consulta y caché de usuarios.
+
+La decisión adicional fue encapsular su utilización dentro de `useUsers`, evitando que los componentes dependan directamente de `useQuery` o de la configuración del cliente.
+
+También configuré `refetchOnWindowFocus` en `false`. Los usuarios utilizados por el challenge se obtienen mediante una consulta con una semilla fija y no representan información que necesite actualizarse cada vez que el usuario vuelve a enfocar la aplicación, por lo que preferí evitar requests innecesarios.
+
+### Refactor de la UI y layouts compartidos
+
+La primera implementación visual se realizó rápidamente a partir del Figma para poder priorizar el desarrollo funcional.
+
+Como consecuencia, esa primera versión tenía varios valores tomados directamente del diseño, estructuras con `flex` innecesariamente anidadas y markup que podía simplificarse.
+
+Una vez terminado el flujo funcional hice un refactor general de la interfaz.
+
+Preferí centralizar en layouts compartidos la estructura principal de las vistas, especialmente el comportamiento responsive, los márgenes, los contenedores y la navegación.
+
+Esto permite que un cambio estructural común pueda realizarse en un único lugar y propagarse a todas las pantallas que utilizan ese layout. Al mismo tiempo, los componentes aceptan personalización mediante props y `className`, por lo que una pantalla puntual puede modificar su comportamiento cuando sea necesario.
+
+### Componentes compuestos
+
+Para algunos componentes elegí una API de componentes compuestos, utilizando estructuras como:
+
+```tsx
+Component
+Component.Skeleton
+Component.Error
+```
+
+La intención fue mantener juntas las variantes que pertenecen al mismo concepto visual y hacer que su utilización desde las páginas sea más declarativa.
+
+Además, preferí esta estructura antes que generar numerosos archivos independientes para pequeños estados visuales relacionados entre sí.
+
+### Flujo de transferencia basado en rutas
+
+Decidí implementar cada fase de la transferencia como una página independiente en lugar de construir un único wizard dentro de una misma vista.
+
+No fue una decisión de performance, sino de organización del flujo.
+
+Cada etapa tiene reglas y responsabilidades diferentes, y utilizar rutas permite que cada página se encargue únicamente de las validaciones correspondientes a su fase.
+
+El draft almacenado en Zustand funciona como nexo entre las distintas pantallas y permite mantener los datos ingresados mientras el usuario avanza por el flujo.
+
+El proceso queda dividido en:
+
+```text
+/transfer
+    ↓
+/transfer/[id]/detail
+    ↓
+/transfer/[id]/confirm
+    ↓
+/transfer/result/[id]
+```
+
+Esto también evita concentrar toda la lógica de la transferencia en un único componente con múltiples estados internos para determinar qué paso debe mostrarse.
+
+#### Fase 1: selección del destinatario
+
+La primera fase es la más simple.
+
+Cuando el usuario selecciona un contacto se crea el draft de la transferencia con el destinatario correspondiente y luego se navega hacia la pantalla de detalle.
+
+También guardo el origen desde el cual comenzó la operación, diferenciando si la transferencia se inició desde `/transfer` o desde el home.
+
+Esto permite conservar contexto de navegación sin acoplar esa decisión a las siguientes pantallas.
+
+#### Fase 2: ingreso del monto y concepto
+
+Antes de permitir interactuar con la pantalla se validan varias condiciones necesarias para continuar el flujo:
+
+* Debe existir el usuario principal.
+* Debe existir un draft activo.
+* El destinatario debe ser válido.
+* El usuario no puede transferirse dinero a sí mismo.
+
+Si alguna de esas condiciones no se cumple, la vista no permite continuar normalmente con la operación.
+
+El monto se mantiene como `string` mientras el usuario escribe. Esto permite controlar de forma explícita formatos como:
+
+```text
+100
+100,50
+100.50
+```
+
+La entrada se valida y posteriormente se transforma mediante un helper a un valor entero expresado en centavos.
+
+A partir de ese momento las reglas monetarias trabajan solamente con enteros, lo que permite validar, entre otras cosas:
+
+* Que el monto sea mayor que cero.
+* Que tenga como máximo dos decimales.
+* Que no supere el saldo disponible.
+
+El concepto es opcional y admite hasta 25 caracteres.
+
+Mientras los valores no sean válidos, el botón de submit permanece deshabilitado.
+
+De todas maneras, las mismas condiciones vuelven a verificarse dentro del handler de envío. El estado `disabled` mejora la experiencia de usuario, pero no se utiliza como única garantía de que los datos sean válidos.
+
+#### Fase 3: confirmación
+
+La pantalla de confirmación vuelve a comprobar que el estado necesario para ejecutar la operación siga siendo válido.
+
+Esta repetición es intencional: cada ruta valida sus propias precondiciones en lugar de asumir que el usuario necesariamente llegó desde la pantalla anterior.
+
+Al confirmar, la operación se delega al servicio de billetera, donde vuelven a aplicarse las reglas correspondientes al dominio de la transferencia.
+
+Entre ellas:
+
+* El movimiento debe representar una transferencia saliente.
+* El monto debe ser válido.
+* Debe existir saldo suficiente.
+* La operación no puede generar dos movimientos ante una doble confirmación.
+
+La UI bloquea el botón mientras la operación se encuentra en curso para evitar nuevas interacciones desde la vista.
+
+Además de ese bloqueo visual, la ejecución utiliza un bloqueo sincrónico para evitar que dos llamadas iniciadas antes de que React procese el siguiente render puedan crear dos movimientos. De esta manera, la protección contra una doble transferencia no depende únicamente del estado visual del componente.
+
+Si alguna condición falla, la billetera no se modifica y el draft permanece disponible para permitir un reintento.
+
+#### Fase 4: resultado
+
+Cuando la transferencia termina correctamente se navega hacia una ruta cuyo parámetro corresponde al identificador del movimiento creado.
+
+La pantalla busca ese movimiento dentro de la billetera y valida que realmente exista y represente una operación válida antes de mostrar el comprobante.
+
+Esto evita construir la pantalla de resultado únicamente a partir de datos temporales conservados en memoria.
+
+Una vez validada la operación, se limpia el draft porque el flujo ya fue completado.
+
+El comprobante incluye además una pequeña funcionalidad para compartir la transferencia utilizando la Web Share API cuando está disponible.
+
+Decidí no generar un PDF ni una imagen para el challenge. La función comparte directamente un resumen en texto con los datos principales de la operación, manteniendo la implementación dentro del alcance solicitado.
+
+### Validaciones en cada etapa
+
+Las validaciones están presentes en distintos niveles de manera deliberada.
+
+Las páginas validan que el flujo tenga el contexto necesario para poder utilizarse, los formularios validan los datos ingresados y el servicio valida nuevamente las reglas necesarias antes de modificar la billetera.
+
+Esto permite que cada capa sea responsable de las reglas que le corresponden y evita depender exclusivamente de la navegación normal de la interfaz.
+
+Estas validaciones no pretenden funcionar como una barrera de seguridad: WayniWallet es una aplicación frontend sin backend transaccional. En una aplicación real, las validaciones definitivas de saldo, identidad y ejecución de la transferencia deberían realizarse en un backend.
 
 ### Dinero representado en centavos
 
-Los montos se almacenan y calculan como enteros en centavos. El texto ingresado por el usuario se valida y convierte antes de operar, evitando cálculos monetarios con números de punto flotante.
+Los montos se almacenan y calculan como enteros en centavos.
+
+El texto ingresado por el usuario se mantiene inicialmente como `string`, se valida y luego se convierte antes de realizar cualquier operación monetaria.
+
+Por ejemplo:
+
+```text
+"1500,50"
+    ↓
+150050
+```
+
+Esto evita depender de operaciones con números de punto flotante para representar dinero y simplifica las comparaciones de saldo y las operaciones sobre movimientos.
+
+El formateo a pesos argentinos queda reservado para la capa de presentación.
 
 ### Persistencia local
 
-El challenge no utiliza un backend de movimientos. La billetera se inicializa con datos locales y cada operación válida se serializa en `localStorage`. Al recuperar la información, el servicio valida su estructura y reconstruye las fechas antes de exponerla a la interfaz.
+El challenge no utiliza un backend de movimientos.
+
+La billetera se inicializa con datos locales y cada operación válida se serializa en `localStorage`.
+
+Al recuperar la información, el servicio valida su estructura y reconstruye valores que no pueden conservar su tipo original al serializarse, como las instancias de `Date`, antes de exponer los datos nuevamente a la aplicación.
+
+`useSyncExternalStore` se utiliza como integración entre ese store externo y React, permitiendo mantener actualizados los componentes cuando cambia la billetera tanto dentro de la misma pestaña como entre diferentes pestañas.
 
 ## Uso de IA
 
 Durante el desarrollo del challenge utilicé herramientas de inteligencia artificial como apoyo para implementar, investigar y revisar el proyecto.
 
-Las decisiones de arquitectura, estructura del proyecto, flujo funcional, modelo de datos y alcance fueron tomadas por mí. La IA se utilizó principalmente para generar, revisar y ajustar helpers y utilidades a demanda, a partir de necesidades concretas del desarrollo.
+La consigna definía parte del stack y algunas restricciones de arquitectura. A partir de esas condiciones, las decisiones sobre cómo integrar las herramientas requeridas, estructurar el proyecto, organizar el flujo funcional, modelar los datos internos y definir el alcance de la implementación fueron tomadas por mí.
 
-En un principio dejé bastante libertad a la IA para que haga la maquetación rápido porque quería priorizar la funcionalidad, tenía en mente refactorizar la UI cuando llegara al final, se puede ver en el chat de referencia 1 al inicio cómo uso codex + mcp de figma para hacer las primeras vistas, extraer las variables y assets, de esa manera, mientras le pedía que implemente la vista con datos mock iba pensando cómo iba a encarar las cosas.
+La IA se utilizó principalmente para acelerar tareas de implementación, generar y revisar helpers y utilidades, crear pruebas adicionales y consultar conceptos puntuales durante el desarrollo.
 
-La mayoría de los test los creó la IA, yo hice los que eran requeridos por el challenge y los otros se los pedí que los cree, en cuando a helpers y formatters, también lo delegué bastante, se los pedí diciéndole cómo quería que funcionar y que métodos/api usar, algunos los fui haciendo con el autocomplete de antigravity.
+En un principio dejé bastante libertad a la IA para realizar rápidamente la maquetación porque quería priorizar la funcionalidad. Desde el comienzo tenía previsto refactorizar la UI una vez terminado el flujo principal.
 
-Donde sí necesité bastante ayuda fue con useSyncExternalStore, nunca había utilizado el hook, fue con lo que más me trabé porque si bien se lo podía pedir a la IA que lo implemente, si no me sentaba un rato a verlo no iba a entender cómo funcionaba después.
+Esto puede verse en el chat de referencia 1, donde inicialmente utilicé Codex junto con el MCP de Figma para implementar las primeras vistas, extraer variables y obtener assets del diseño. Mientras la IA trabajaba sobre esas primeras vistas con datos mock, fui definiendo cómo iba a estructurar la aplicación y resolver el flujo funcional.
 
-Cuando terminé la parte funcional, hice un refactor grande de la UI, implementé manualmente la UI del home con algunos autocomplete de antigravity, al tener el caso de ejemplo completo, fui a codex y con un /goal lo hice replicar los mismos patrones a todos los componentes de la app
+La mayoría de los tests adicionales fueron creados con ayuda de IA. Implementé personalmente los requeridos por el challenge y luego pedí generar casos adicionales para ampliar la cobertura.
+
+También delegué parte de la implementación de helpers y formatters, indicando previamente el comportamiento esperado y, cuando correspondía, los métodos o APIs que quería utilizar. Algunos de ellos también fueron desarrollados utilizando el autocompletado de Antigravity.
+
+Donde más asistencia necesité fue con `useSyncExternalStore`, ya que nunca había utilizado este hook. Fue la parte del challenge en la que más tiempo dediqué a investigar y entender el funcionamiento antes de dejar la implementación definitiva.
+
+Una vez terminada la parte funcional hice un refactor general de la UI. Implementé manualmente el home utilizando algunos autocompletados de Antigravity y, una vez definido ese patrón, utilicé Codex con un `/goal` para replicar la misma estructura sobre el resto de los componentes de la aplicación.
 
 ### Herramientas utilizadas
 
