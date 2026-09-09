@@ -3,7 +3,7 @@ import Image from "next/image";
 type UserCardProps = {
   imageSrc: string;
   name: string;
-  variant?: "header" | "contact";
+  variant?: "header" | "contact" | "detail";
 };
 
 const variants = {
@@ -13,9 +13,14 @@ const variants = {
     name: "text-[15px] leading-[18px] font-bold text-primary-foreground lg:text-[20px] lg:leading-[24px]",
   },
   contact: {
-    container: "flex w-20 shrink-0 flex-col items-center gap-4",
-    image: "size-[65px]",
-    name: "w-full truncate text-center text-sm leading-[17px] text-foreground",
+    container: "flex items-center gap-2 p-2 w-full",
+    image: "size-[48px]",
+    name: "text-center text-sm leading-[17px] text-foreground",
+  },
+  detail: {
+    container: "flex flex-col items-center gap-2 w-full",
+    image: "size-[64px]",
+    name: "text-center text-sm font-bold leading-[17px] text-foreground lg:text-base lg:leading-5",
   },
 } as const;
 

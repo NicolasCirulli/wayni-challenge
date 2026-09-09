@@ -9,8 +9,8 @@ export function UserBalance({
 }: UserBalanceProps) {
   return (
     <div className="flex flex-col items-center gap-2 text-primary-foreground">
-      <span className="text-base leading-[19px]">{label}</span>
-      <strong className="text-[32px] leading-[39px] font-bold">{amount}</strong>
+      <span className="text-sm leading-[19px]">{label}</span>
+      <strong className="text-xl leading-[39px] font-bold">{amount}</strong>
     </div>
   );
 }
