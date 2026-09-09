@@ -5,11 +5,10 @@ interface HeaderNavigationProps {
 }
 
 export function HeaderNavigation({ title }: HeaderNavigationProps) {
-    return <header className="grid grid-cols-[1fr_auto_1fr] justify-center items-center px-2 py-8 text-primary-foreground">
-        <div className="justify-self-start flex items-center">
+    return <header className="relative flex items-center justify-center px-4 py-8 text-primary-foreground">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2">
             <BackButton />
         </div>
-        <h1 className="text-2xl">{title}</h1>
-        <div />
+        <h1 className="text-center text-xl font-bold sm:text-2xl">{title}</h1>
     </header>
 }

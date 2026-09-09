@@ -8,19 +8,19 @@ type UserCardProps = {
 
 const variants = {
   header: {
-    container: "flex items-center gap-[14px] lg:gap-[32px] lg:flex-col",
-    image: "size-[34px] lg:size-[64px]",
-    name: "text-[15px] leading-[18px] font-bold text-primary-foreground lg:text-[20px] lg:leading-[24px]",
+    container: "flex items-center gap-3.5 lg:flex-col lg:gap-8",
+    image: "size-9 lg:size-16",
+    name: "text-sm font-bold leading-5 text-primary-foreground lg:text-xl lg:leading-6",
   },
   contact: {
-    container: "flex items-center gap-2 p-2 w-full",
-    image: "size-[48px]",
-    name: "text-center text-sm leading-[17px] text-foreground",
+    container: "flex w-full items-center gap-2 p-2",
+    image: "size-12",
+    name: "text-center text-sm leading-5 text-foreground",
   },
   detail: {
-    container: "flex flex-col items-center gap-2 w-full",
-    image: "size-[64px]",
-    name: "text-center text-sm font-bold leading-[17px] text-foreground lg:text-base lg:leading-5",
+    container: "flex w-full flex-col items-center gap-2",
+    image: "size-16",
+    name: "text-center text-sm font-bold leading-5 text-foreground lg:text-base",
   },
 } as const;
 
