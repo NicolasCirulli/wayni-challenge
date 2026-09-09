@@ -4,12 +4,16 @@ import type {
   WalletMovementParticipant,
 } from "@/types/wallet";
 
+const REFERENCE_NUMBER_PATTERN = /^\d{8}$/;
+const generatedReferenceNumbers = new Set<string>();
+
 export const WALLET_STORAGE_KEY = "wallet";
 export const INITIAL_WALLET: Wallet = {
   balanceCents: 105_000_000,
   movements: [
     {
       id: "movement-transfer-outgoing",
+      referenceNumber: createReferenceNumber(),
       type: "transfer",
       direction: "outgoing",
       participant: {
@@ -23,6 +27,7 @@ export const INITIAL_WALLET: Wallet = {
     },
     {
       id: "movement-cash-in",
+      referenceNumber: createReferenceNumber(),
       type: "cash-in",
       direction: "incoming",
       concept: "Ingreso de dinero",
@@ -31,6 +36,7 @@ export const INITIAL_WALLET: Wallet = {
     },
     {
       id: "movement-transfer-incoming",
+      referenceNumber: createReferenceNumber(),
       type: "transfer",
       direction: "incoming",
       participant: {
@@ -51,6 +57,12 @@ type StoredWalletMovement = Omit<WalletMovement, "date"> & {
 
 type StoredWallet = Omit<Wallet, "movements"> & {
   movements: StoredWalletMovement[];
+};
+
+type CreateTransferMovementParams = {
+  recipient: WalletMovementParticipant;
+  amountCents: number;
+  concept: string;
 };
 
 let ultimoStorage: string | null = null;
@@ -126,6 +138,80 @@ export function initializeWallet(): Wallet {
 
   return INITIAL_WALLET;
 }
+function createReferenceNumber(
+  existingReferenceNumbers: Iterable<string> = [],
+): string {
+  const usedReferenceNumbers = new Set([
+    ...existingReferenceNumbers,
+    ...generatedReferenceNumbers,
+  ]);
+  let referenceNumber: string;
+
+  do {
+    referenceNumber = Math.floor(
+      10_000_000 + Math.random() * 90_000_000,
+    ).toString();
+  } while (usedReferenceNumbers.has(referenceNumber));
+
+  generatedReferenceNumbers.add(referenceNumber);
+
+  return referenceNumber;
+}
+
+export function createMovement(
+  { recipient, amountCents, concept }: CreateTransferMovementParams
+): WalletMovement {
+  const existingReferenceNumbers =
+    getWallet()?.movements.map((movement) => movement.referenceNumber) ?? [];
+
+  return {
+    id: crypto.randomUUID(),
+    referenceNumber: createReferenceNumber(existingReferenceNumbers),
+    type: "transfer",
+    direction: "outgoing",
+    participant: recipient,
+    concept,
+    amountCents,
+    date: new Date(),
+  };
+}
+
+export function applyMovement(
+  movement: WalletMovement,
+): Wallet {
+  const wallet = getWallet();
+
+  if (!wallet) {
+    throw new Error("Wallet no inicializada");
+  }
+
+  if (movement.direction !== "outgoing") {
+    throw new Error("El movimiento debe ser saliente");
+  }
+
+  if (
+    !Number.isSafeInteger(movement.amountCents) ||
+    movement.amountCents <= 0
+  ) {
+    throw new Error("Monto inválido");
+  }
+
+  if (movement.amountCents > wallet.balanceCents) {
+    throw new Error("Saldo insuficiente");
+  }
+
+  const updatedWallet: Wallet = {
+    balanceCents: wallet.balanceCents - movement.amountCents,
+    movements: [
+      movement,
+      ...wallet.movements,
+    ],
+  };
+
+  saveWallet(updatedWallet);
+
+  return updatedWallet;
+}
 
 //helpers
 function isWalletMovementParticipant(
@@ -162,8 +248,11 @@ function hasWalletMovementData(
     typeof value.concept === "string" &&
     "amountCents" in value &&
     typeof value.amountCents === "number" &&
-    Number.isInteger(value.amountCents) &&
-    value.amountCents > 0
+    Number.isSafeInteger(value.amountCents) &&
+    value.amountCents > 0 &&
+    "referenceNumber" in value &&
+    typeof value.referenceNumber === "string" &&
+    REFERENCE_NUMBER_PATTERN.test(value.referenceNumber)
   );
 }
 
@@ -187,7 +276,7 @@ function hasWalletData(
     value !== null &&
     "balanceCents" in value &&
     typeof value.balanceCents === "number" &&
-    Number.isInteger(value.balanceCents) &&
+    Number.isSafeInteger(value.balanceCents) &&
     "movements" in value &&
     Array.isArray(value.movements)
   );

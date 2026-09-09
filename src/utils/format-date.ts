@@ -20,3 +20,22 @@ export function formatDate(dateInput: Date) {
     }
     return `${prefix} · ${time}`;
 }
+
+const DATE_FORMATTER = new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+});
+
+const TIME_FORMATTER = new Intl.DateTimeFormat("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+});
+
+export function formatMovementDate(date: Date): string {
+    return DATE_FORMATTER.format(date);
+}
+
+export function formatMovementTime(date: Date): string {
+    return TIME_FORMATTER.format(date);
+}

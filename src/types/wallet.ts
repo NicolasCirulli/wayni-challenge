@@ -16,6 +16,7 @@ export interface WalletMovement {
   concept: string;
   amountCents: number;
   date: Date;
+  referenceNumber: string;
 }
 
 export interface Wallet {
